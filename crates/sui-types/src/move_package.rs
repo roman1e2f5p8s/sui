@@ -27,7 +27,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use serde_with::Bytes;
-use serde_with::json::JsonString;
 use std::collections::{BTreeMap, BTreeSet};
 use std::hash::Hash;
 use sui_protocol_config::ProtocolConfig;
@@ -121,7 +120,7 @@ pub struct MovePackage {
 
     // For each dependency, maps original package ID to the info about the (upgraded) dependency
     // version that this package is using
-    #[serde_as(as = "BTreeMap<JsonString, _>")]
+    #[serde_as(as = "Vec<(_, _)>")]
     linkage_table: BTreeMap<ObjectID, UpgradeInfo>,
 }
 
