@@ -120,7 +120,6 @@ pub struct MovePackage {
 
     // For each dependency, maps original package ID to the info about the (upgraded) dependency
     // version that this package is using
-    #[serde_as(as = "Vec<(_, _)>")]
     linkage_table: BTreeMap<ObjectID, UpgradeInfo>,
 }
 
