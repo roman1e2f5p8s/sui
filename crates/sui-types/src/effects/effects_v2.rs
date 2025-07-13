@@ -25,24 +25,24 @@ use std::collections::{BTreeMap, BTreeSet};
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct TransactionEffectsV2 {
     /// The status of the execution
-    pub status: ExecutionStatus,
+    pub(crate) status: ExecutionStatus,
     /// The epoch when this transaction was executed.
-    pub executed_epoch: EpochId,
-    pub gas_used: GasCostSummary,
+    pub(crate) executed_epoch: EpochId,
+    pub(crate) gas_used: GasCostSummary,
     /// The transaction digest
-    pub transaction_digest: TransactionDigest,
+    pub(crate) transaction_digest: TransactionDigest,
     /// The updated gas object reference, as an index into the `changed_objects` vector.
     /// Having a dedicated field for convenient access.
     /// System transaction that don't require gas will leave this as None.
-    pub gas_object_index: Option<u32>,
+    pub(crate) gas_object_index: Option<u32>,
     /// The digest of the events emitted during execution,
     /// can be None if the transaction does not emit any event.
-    pub events_digest: Option<TransactionEventsDigest>,
+    pub(crate) events_digest: Option<TransactionEventsDigest>,
     /// The set of transaction digests this transaction depends on.
-    pub dependencies: Vec<TransactionDigest>,
+    pub(crate) dependencies: Vec<TransactionDigest>,
 
     /// The version number of all the written Move objects by this transaction.
-    pub lamport_version: SequenceNumber,
+    pub(crate) lamport_version: SequenceNumber,
     /// Objects whose state are changed in the object store.
     /// This field should not be exposed to the public API.
     /// Otherwise it will make it harder to use effects of different versions.
@@ -50,16 +50,16 @@ pub struct TransactionEffectsV2 {
     /// that stores the accumulator value. However this object is not really mutated
     /// in this transaction. We just have to use an ObjectID that is unique so that
     /// it does not conflict with any other object IDs in the changed_objects.
-    pub changed_objects: Vec<(ObjectID, EffectsObjectChange)>,
+    pub(crate) changed_objects: Vec<(ObjectID, EffectsObjectChange)>,
     /// Shared objects that are not mutated in this transaction. Unlike owned objects,
     /// read-only shared objects' version are not committed in the transaction,
     /// and in order for a node to catch up and execute it without consensus sequencing,
     /// the version needs to be committed in the effects.
-    pub unchanged_shared_objects: Vec<(ObjectID, UnchangedSharedKind)>,
+    pub(crate) unchanged_shared_objects: Vec<(ObjectID, UnchangedSharedKind)>,
     /// Auxiliary data that are not protocol-critical, generated as part of the effects but are stored separately.
     /// Storing it separately allows us to avoid bloating the effects with data that are not critical.
     /// It also provides more flexibility on the format and type of the data.
-    pub aux_data_digest: Option<EffectsAuxDataDigest>,
+    pub(crate) aux_data_digest: Option<EffectsAuxDataDigest>,
 }
 
 impl TransactionEffectsAPI for TransactionEffectsV2 {
@@ -598,6 +598,46 @@ impl TransactionEffectsV2 {
         result.check_invariant();
 
         result
+    }
+
+    pub fn new_from_fields(
+        status: ExecutionStatus,
+        executed_epoch: EpochId,
+        gas_used: GasCostSummary,
+        transaction_digest: TransactionDigest,
+        gas_object_index: Option<u32>,
+        events_digest: Option<TransactionEventsDigest>,
+        dependencies: Vec<TransactionDigest>,
+        lamport_version: SequenceNumber,
+        changed_objects: Vec<(ObjectID, EffectsObjectChange)>,
+        unchanged_shared_objects: Vec<(ObjectID, UnchangedSharedKind)>,
+        aux_data_digest: Option<EffectsAuxDataDigest>,
+    ) -> Self {
+        Self {
+            status,
+            executed_epoch,
+            gas_used,
+            transaction_digest,
+            gas_object_index,
+            events_digest,
+            dependencies,
+            lamport_version,
+            changed_objects,
+            unchanged_shared_objects,
+            aux_data_digest,
+        }
+    }
+
+    pub fn gas_object_index(&self) -> Option<u32> {
+        self.gas_object_index
+    }
+
+    pub fn changed_objects(&self) -> Vec<(ObjectID, EffectsObjectChange)> {
+        self.changed_objects.clone()
+    }
+
+    pub fn aux_data_digest(&self) -> Option<EffectsAuxDataDigest> {
+        self.aux_data_digest
     }
 
     /// This function demonstrates what's the invariant of the effects.
